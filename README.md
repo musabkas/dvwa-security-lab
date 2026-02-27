@@ -195,7 +195,7 @@ Image: ![sql-inject-high](images/sql-inject/sql-inject-high.png) <br>
 Explanation why it worked: There was no cleaning of input. <br>
 Explanation why it failed at higher levels: It ensures input must be a number therefore it can not be a string that breaks the SQL.
 
-## Template
+## SQL Injectin Blind
 ### Security Level: Low 
 Payload: Try multiple posts to determine length of name and then actual characters of name. Refer to `resources/sql-blind.py`<br>
 Result: Database version: `10.1.26-MariaDB-0+deb9u1`<br>
@@ -216,6 +216,16 @@ Result: Database version: `10.1.26-MariaDB-0+deb9u1` <br>
 Image: ![sql-inj-blind-high](images/sql-inject-blind/sql-inj-blind-high.png)<br>
 Explanation why it worked: There was no validation on ID cookie format. <br>
 Explanation why it failed at higher levels: It ensures input must be a number therefore it can not be a string that breaks the SQL.
+
+## Weak Session IDs
+### Security Level: Low 
+Generation method: Increment from 0 <br>
+
+### Security Level: Medium
+Generation method: Unix timestamp of session creation time<br>
+
+### Security Level: High
+Generation method: Increment from 0 and then apply md5 hash<br>
 
 ## Template
 ### Security Level: Low 
