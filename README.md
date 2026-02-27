@@ -75,8 +75,8 @@ Payload: `curl -v --referer "http://localhost:8080/vulnerabilities/csrf/" "http:
 Result: Password gets updated <br>
 Image:
 ![csrf-med](images/csrf/csrf-med.png)
-Explanation why it worked: We modif
-Explanation why it failed at higher levels: 
+Explanation why it worked: We set the referrer header ourselves to be the one expected, allowing us to get through.
+Explanation why it failed at higher levels: A unique CSRF token is required for the request.
 
 <!-- ### Security Level: High
 Payload: `|ls`
