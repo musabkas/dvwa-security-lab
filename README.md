@@ -173,6 +173,28 @@ Image: ![insecure-captcha-high](images/insecure-captcha/captcha-high.png) <br>
 Explanation why it worked: There were some values used in testing to bypass captcha, however, they were still usable in deployed web app.<br>
 Explanation why it failed at higher levels: Captcha is single step and the testing key is removed.
 
+## SQL Injection
+### Security Level: Low 
+Payload: `0' UNION SELECT first_name, password FROM users #` <br>
+Result: All usernames and passwords in system are dumped. <br>
+Image: ![sql-inject-low](images/sql-inject/sql-inject-low.png) <br>
+Explanation why it worked: Input was not treated for characters that break queries. <br>
+Explanation why it failed at higher levels: Input is passed through a sanitising function.
+
+### Security Level: Medium
+Payload: Modify POST request body to be: `id=0 UNION SELECT first_name, password FROM users&Submit=Submit`<br>
+Result: All usernames and passwords in the system are dumped. <br>
+Image: ![sql-inject-med](images/sql-inject/sql-inject-med.png) <br>
+Explanation why it worked: The POST request was not validated to be from the dropdown content and the input was not already inside quotes.<br>
+Explanation why it failed at higher levels: 
+
+### Security Level: High
+Payload: `0' UNION SELECT first_name, password FROM users #`<br>
+Result: On the original page, all usernames and passwords in the system are dumped. <br>
+Image: ![sql-inject-high](images/sql-inject/sql-inject-high.png) <br>
+Explanation why it worked: There was no cleaning of input. <br>
+Explanation why it failed at higher levels: It ensures input must be a number therefore it can not be a string that breaks the SQL.
+
 ## Template
 ### Security Level: Low 
 Payload: <br>
