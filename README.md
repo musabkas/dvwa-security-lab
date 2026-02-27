@@ -186,13 +186,35 @@ Payload: Modify POST request body to be: `id=0 UNION SELECT first_name, password
 Result: All usernames and passwords in the system are dumped. <br>
 Image: ![sql-inject-med](images/sql-inject/sql-inject-med.png) <br>
 Explanation why it worked: The POST request was not validated to be from the dropdown content and the input was not already inside quotes.<br>
-Explanation why it failed at higher levels: 
+Explanation why it failed at higher levels: It fails in impossible because there the input has to be a number, therefore it can not be a string that breaks the SQL.
 
 ### Security Level: High
 Payload: `0' UNION SELECT first_name, password FROM users #`<br>
 Result: On the original page, all usernames and passwords in the system are dumped. <br>
 Image: ![sql-inject-high](images/sql-inject/sql-inject-high.png) <br>
 Explanation why it worked: There was no cleaning of input. <br>
+Explanation why it failed at higher levels: It ensures input must be a number therefore it can not be a string that breaks the SQL.
+
+## Template
+### Security Level: Low 
+Payload: Try multiple posts to determine length of name and then actual characters of name. Refer to `resources/sql-blind.py`<br>
+Result: Database version: `10.1.26-MariaDB-0+deb9u1`<br>
+Image: ![sql-inj-blind-low](images/sql-inject-blind/sql-inj-blind-low.png)<br>
+Explanation why it worked: Because we could easily escape the query and create our own yes/no query. This yes/no query would eventually help us determine the database version.<br>
+Explanation why it failed at higher levels: Input is passed through a sanitising function.
+
+### Security Level: Medium
+Payload: Same as above except now we use POST requests and pass it in as data payload rather than just url. Refer to `resources/sql-blind.py`
+Result: Database version: `10.1.26-MariaDB-0+deb9u1` <br>
+Image: ![sql-inj-blind-med](images/sql-inject-blind/sql-inj-blind-med.png)<br>
+Explanation why it worked: The POST request was not validated to be from the dropdown content and the input was not already inside quotes. <br>
+Explanation why it failed at higher levels: It fails in impossible because there the input has to be a number, therefore it can not be a string that breaks the SQL.
+
+### Security Level: High
+Payload: Same as above except now we set id in cookies. Refer to `resources/sql-blind.py`<br>
+Result: Database version: `10.1.26-MariaDB-0+deb9u1` <br>
+Image: ![sql-inj-blind-high](images/sql-inject-blind/sql-inj-blind-high.png)<br>
+Explanation why it worked: There was no validation on ID cookie format. <br>
 Explanation why it failed at higher levels: It ensures input must be a number therefore it can not be a string that breaks the SQL.
 
 ## Template
