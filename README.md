@@ -296,7 +296,29 @@ Image: ![xss-stored-high](images/xss-stored/xss-stored-high.png)<br>
 Explanation why it worked: The check on the name was only against `<script>` tags, but there are other ways to execute Javascript. <br>
 Explanation why it failed at higher levels: Special characters in both name and message are encoded to stop it from functioning as a script.
 
-## Template
+## CSP Bypass
+### Security Level: Low 
+Payload: Upload `csp.js` using File Upload. Then use the payload: `/../hackable/uploads/csp.js`<br>
+Result: The alert is displayed.<br>
+Image: ![csp-low](images/csp/csp-low.png)<br>
+Explanation why it worked: Because the website itself is whitelisted for code execution.<br>
+Explanation why it failed at higher levels: The script tags are removed on Medium, and in High, we can not specify custom file locations.
+
+### Security Level: Medium
+Payload: <script nonce="TmV2ZXIgZ29pbmcgdG8gZ2l2ZSB5b3UgdXA=">alert(1)</script> <br>
+Result: Alert message displayed<br>
+Image: ![csp-med](images/csp/csp-med.png)<br>
+Explanation why it worked: The nonce wasn't hidden from end user.<br>
+Explanation why it failed at higher levels: No nonce exceptions in CSP.
+
+### Security Level: High
+Payload: Intercept callback with burpsuite then modify the parameter: `?callback=alert(1)`<br>
+Result: The alert is displayed.<br>
+Image: ![csp-high](images/csp/csp-high.png)<br>
+Explanation why it worked: Since the function call depended on a passed argument, we could modify the argument to specify our own function.<br>
+Explanation why it failed at higher levels: The function was fixed/hard-coded.
+
+## JavaScript
 ### Security Level: Low 
 Payload: <br>
 Result: <br>
