@@ -320,25 +320,28 @@ Explanation why it failed at higher levels: The function was fixed/hard-coded.
 
 ## JavaScript
 ### Security Level: Low 
-Payload: <br>
-Result: <br>
-Image: <br>
-Explanation why it worked: <br>
-Explanation why it failed at higher levels:
+Payload: Modify phrase to: `success`, then in console run: `generate_token()` then submit.<br>
+Result: Success message displayed<br>
+Image: ![js-low](images/js/js-low.png)<br>
+Explanation why it worked: The token was updated upon running generate_token(). This led the value to match on the backend and succeed.<br>
+Explanation why it failed at higher levels: The function name is made less meaningful which makes it a bit harder to make sense of.
 
 ### Security Level: Medium
-Payload: <br>
-Result: <br>
-Image: <br>
-Explanation why it worked: <br>
-Explanation why it failed at higher levels:
+Payload: Modify phrase to: `success`, then in console run: `do_elsesomething("XX")` then submit.<br>
+Result: Success message displayed. <br>
+Image: ![js-med](images/js/js-med.png)<br>
+Explanation why it worked: We could see in the code that there is another function that is not being called but could modify the token value, so it seemed plausible that it could help. <br>
+Explanation why it failed at higher levels: The code is obfuscated by an engine which makes direct reading hard.
 
 ### Security Level: High
-Payload: <br>
-Result: <br>
-Image: <br>
-Explanation why it worked: <br>
-Explanation why it failed at higher levels:
+Payload: POST request with body: `token=ec7ef8687050b6fe803867ea696734c67b541dfafb286a0b1239f42ac5b0aa84&phrase=success&send=Submit`<br>
+Result: Success message returned.<br>
+Image: ![js-high](images/js/js-high.png)<br>
+Explanation why it worked: After deobfuscating, we see that the overall sequence of steps on an input are: reverse -> prepend XX -> SHA256 -> append ZZ -> SHA256. We can use these steps to determine the desired token value.<br>
+Explanation why it failed at higher levels: In the words of the DVWA maintainers: 
+```
+You can never trust anything that comes from the user or prevent them from messing with it and so there is no impossible level.
+```
 
 
 ## Security Analysis
