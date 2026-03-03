@@ -345,15 +345,49 @@ You can never trust anything that comes from the user or prevent them from messi
 
 
 ## Security Analysis
-1. Why does SQL Injection succeed at Low security?
-2. What control prevents it at High?
-3. Does HTTPS prevent these attacks? Why or why not?
-4. What risks exist if this application is deployed publicly?
-5. Map each vulnerability to its OWASP Top 10 category.
+1. Why does SQL Injection succeed at Low security: There is no validation/sanitation of input so the user can break out of the query through a `'` and build their custom query.
+2. What control prevents it at High: It still suffers from this issue even though it uses a separate page for the queries. The impossible level prevents it by forcing the input to be of a numeric type, so it is then unable to break out of the SQL query.
+3. Does HTTPS prevent these attacks? Why or why not: No. HTTPS protects data from being sniffed and protects it during transit. But this is an issue on the level of the application, not transport. From HTTPS perspective, it is just abiding by what it deems to be valid instructions/requests.
+4. What risks exist if this application is deployed publicly: Attackers can create credentials and backdoors for themselves, obtain server data, break in with administrative writes and completely take over the system, and potentially even work their way towards the host of the container.
+5. Map each vulnerability to its OWASP Top 10 category:
 
+| Vulnerability | OWASP Category |
+| - | - |
+| Brute Force | A07:2025 - Authentication Failures |
+| Command Injection | A05:2025 – Injection |
+| CSRF | A01:2025 – Broken Access Control |
+| File Inclusion (LFI/RFI) | A01:2025 – Broken Access Control |
+| File Upload | A08:2025 – Software & Data Integrity Failures |
+| Insecure CAPTCHA | A06:2025 – Insecure Design |
+| SQL Injection | A05:2025  Injection |
+| SQL Injection (Blind) | A05:2025 – Injection |
+| Weak Session IDs | A07:2025 – Authentication Failures |
+| XSS (DOM, Reflected, Stored) |A05:2025 – Injection |
+|CSP Bypass | A02:2025 – Security Misconfiguration |
+|JavaScript |A06:2025 – Insecure Design |
 
 ## Docker Inspection
+`docker ps` <br>
+Gives a list of running containers.
+![docker-ps](images/docker-inspection/docker-ps.png)
 
+`docker inspect dvwa` <br>
+Outputs a JSON detailing container configuration.
+![docker-inspect](images/docker-inspection/docker-inspect.png)
+
+`docker logs dvwa` <br>
+Gives the logs: stdout and stderr; of the container since time of creation.
+![docker-logs](images/docker-inspection/docker-logs.png)
+
+```
+docker exec -it dvwa /bin/bash
+ls /var/www/html
+```
+Gives the list of files for the localhost webpage of dvwa.
+![docker-ls](images/docker-inspection/docker-ls.png)
+
+1. Where application files are stored: `/var/www/html`
+2. What backend technology DVWA uses: A Linux Machine, with a Apache server backend, a SQL database, written in PHP.
+3. How Docker isolates the environment: It gives the application its own set of resources and completely isolates it. The files aren't even directly accessible by the host OS. However, the container is running on the host OS, not a new OS. And the resource allocation is managed through cgroups (control groups) that limit storage, cpu, memory, etc. 
 
 ## Bonus Setup
-dvwa behind nginx proxy
