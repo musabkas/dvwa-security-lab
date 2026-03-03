@@ -359,35 +359,84 @@ You can never trust anything that comes from the user or prevent them from messi
 | File Inclusion (LFI/RFI) | A01:2025 – Broken Access Control |
 | File Upload | A08:2025 – Software & Data Integrity Failures |
 | Insecure CAPTCHA | A06:2025 – Insecure Design |
-| SQL Injection | A05:2025  Injection |
+| SQL Injection | A05:2025 - Injection |
 | SQL Injection (Blind) | A05:2025 – Injection |
 | Weak Session IDs | A07:2025 – Authentication Failures |
 | XSS (DOM, Reflected, Stored) |A05:2025 – Injection |
-|CSP Bypass | A02:2025 – Security Misconfiguration |
-|JavaScript |A06:2025 – Insecure Design |
+| CSP Bypass | A02:2025 – Security Misconfiguration |
+| JavaScript |A06:2025 – Insecure Design |
 
 ## Docker Inspection
 `docker ps` <br>
-Gives a list of running containers.
-![docker-ps](images/docker-inspection/docker-ps.png)
+Gives a list of running containers. <br>
+![docker-ps](images/docker-inspection/docker-ps.png) <br>
 
 `docker inspect dvwa` <br>
-Outputs a JSON detailing container configuration.
-![docker-inspect](images/docker-inspection/docker-inspect.png)
+Outputs a JSON detailing container configuration. <br>
+![docker-inspect](images/docker-inspection/docker-inspect.png) <br>
 
 `docker logs dvwa` <br>
-Gives the logs: stdout and stderr; of the container since time of creation.
-![docker-logs](images/docker-inspection/docker-logs.png)
+Gives the logs: stdout and stderr; of the container since time of creation. <br>
+![docker-logs](images/docker-inspection/docker-logs.png) <br>
 
 ```
 docker exec -it dvwa /bin/bash
 ls /var/www/html
 ```
-Gives the list of files for the localhost webpage of dvwa.
-![docker-ls](images/docker-inspection/docker-ls.png)
+Gives the list of files for the localhost webpage of dvwa. <br>
+![docker-ls](images/docker-inspection/docker-ls.png) <br>
 
 1. Where application files are stored: `/var/www/html`
 2. What backend technology DVWA uses: A Linux Machine, with a Apache server backend, a SQL database, written in PHP.
 3. How Docker isolates the environment: It gives the application its own set of resources and completely isolates it. The files aren't even directly accessible by the host OS. However, the container is running on the host OS, not a new OS. And the resource allocation is managed through cgroups (control groups) that limit storage, cpu, memory, etc. 
 
-## Bonus Setup
+## Secure Deployment
+#### Nginx reverse proxy
+1. Create a Docker Network `docker network create dvwa-net`
+2. Add to nginx config `resources/secure-deployment/proxy.conf`
+    ```
+    location / {
+            proxy_pass http://dvwa:80/;
+        }
+    ```
+3. Create a docker compose file, specifying port for nginx, attaching the volume for the config file and connecting with `dvwa` via bridge: `resources/secure-deployment/docker-compose-proxy.yml`
+4. Run container `docker-compose up -d`
+
+Result: <br>
+DVWA on localhost `/`: <br>
+![dvwa-reverse](images/secure-deployment/dvwa-local.png) <br>
+DVWA not accessible directly on `8080`: <br>
+![dvwa-8080](images/secure-deployment/dvwa-8080.png) <br>
+
+#### HTTPS self-signed certificate
+1. Create self-signed key and certificate:
+```
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout certs/selfsigned.key -out certs/selfsigned.crt
+
+Country Name (2 letter code) [AU]:PK
+State or Province Name (full name) [Some-State]:Sindh
+Locality Name (eg, city) []:Karachi
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:Habib University
+Organizational Unit Name (eg, section) []:DSSE
+Common Name (e.g. server FQDN or YOUR name) []:Musab
+Email Address []:musab16000@gmail.com
+```
+2. Update nginx config `resources/secure-deployment/https.conf` to redirect to HTTPS and use SSL certificates
+3. Modify the docker compose file to add HTTPS port (443) and mount volumes for certificates: `resources/secure-deployment/docker-compose-https.yml`
+#### HTTP vs HTTPS
+##### HTTP: 
+![http](images/secure-deployment/http.png)
+There is no security tab in our network request. This is because the data is sent as plaintext, which a hacker can easily sniff and get our unencrypted credentials/messages. This connection is highly insecure and prone to tampering.
+
+Unencrypted HTTP traffic:
+`sudo tcpdump -i any -vv -X port 80`
+![http-traffic](images/secure-deployment/http-traffic.png)
+
+
+##### HTTPS:
+![https](images/secure-deployment/https.png)
+There is an added security tab which tells us the encryption type. This means that if anyone sniffs the data packet, they would not actually see the data sent (i.e. they won't see the plaintext username and password), rather they will see encrypted gibberish, which keeps our data secure and untampered.
+
+Encrypted HTTPS traffic:
+`sudo tcpdump -i any -vv -X port 443`
+![https-traffic](images/secure-deployment/https-traffic.png)

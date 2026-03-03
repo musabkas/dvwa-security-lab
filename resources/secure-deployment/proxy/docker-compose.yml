@@ -1,0 +1,18 @@
+services:
+  nginx-proxy:
+    image: nginx:latest
+    ports:
+      - "80:80" 
+    volumes:
+      - ./proxy.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - dvwa-net
+
+  dvwa:
+    image: vulnerables/web-dvwa
+    networks:
+      - dvwa-net
+      
+networks:
+  dvwa-net:
+    driver: bridge
